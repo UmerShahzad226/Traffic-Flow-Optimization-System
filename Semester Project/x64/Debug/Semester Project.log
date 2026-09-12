@@ -1,0 +1,38 @@
+﻿  main.cpp
+C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Graph.h(243,14): warning C4305: '=': truncation from 'int' to 'float'
+  (compiling source file 'main.cpp')
+      C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Graph.h(243,14):
+      the template instantiation context (the oldest one first) is
+          C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Initializer.h(19,21):
+          see reference to class template instantiation 'AdjList<int>' being compiled
+          C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Graph.h(228,10):
+          while compiling class template member function 'std::list<int,std::allocator<_Ty>> AdjList<int>::shortestPath(T,T)'
+          with
+          [
+              _Ty=int,
+              T=int
+          ]
+              C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Manager.h(80,25):
+              see the first reference to 'AdjList<int>::shortestPath' in 'Manager::addVehicle'
+  
+  trafficSimulation.cpp
+C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Graph.h(243,14): warning C4305: '=': truncation from 'int' to 'float'
+  (compiling source file 'trafficSimulation.cpp')
+      C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Graph.h(243,14):
+      the template instantiation context (the oldest one first) is
+          C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Initializer.h(19,21):
+          see reference to class template instantiation 'AdjList<int>' being compiled
+          C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Graph.h(228,10):
+          while compiling class template member function 'std::list<int,std::allocator<_Ty>> AdjList<int>::shortestPath(T,T)'
+          with
+          [
+              _Ty=int,
+              T=int
+          ]
+              C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\Manager.h(80,25):
+              see the first reference to 'AdjList<int>::shortestPath' in 'Manager::addVehicle'
+  
+  .NETFramework,Version=v4.7.2.AssemblyAttributes.cpp
+  Generating Code...
+  main.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
+  Semester Project.vcxproj -> C:\Users\DELL\Desktop\Semester 4\DATA SRUCTURES\Project\Semester Project 02 by Azeemi\Semester Project\x64\Debug\Semester Project.exe

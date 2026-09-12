@@ -1,0 +1,137 @@
+=============================================================================
+               TRAFFIC FLOW OPTIMIZATION SYSTEM - ARCHITECTURE
+=============================================================================
+This document provides a detailed breakdown of the backend and frontend 
+components of the Traffic Simulation project to assist in creating a 
+UML Class Diagram and understanding the system architecture.
+
+-----------------------------------------------------------------------------
+1. DESIGN PATTERNS USED
+-----------------------------------------------------------------------------
+- Observer Pattern: Used to decouple the simulation state (Roads, Intersections) 
+  from the central Manager. Roads and Intersections act as "Subjects" that 
+  notify the Manager ("Observer") when congestion or signals change.
+- Singleton / God Object: The `Manager` acts as the central coordinator.
+
+-----------------------------------------------------------------------------
+2. BACKEND CLASSES & STRUCTURES
+-----------------------------------------------------------------------------
+
+>> Vehicle (Struct)
+Purpose: Represents a single car in the simulation.
+Attributes:
+  - int id: Unique identifier.
+  - int src, dst: Source and destination intersection IDs.
+  - Road* currEdge: The road the vehicle is currently on.
+  - Road* nextEdge: The road the vehicle will transition to next.
+  - float rv: Remaining travel time on the current road.
+  - float disappearTimer: Countdown for removal after arrival.
+  - string status: State of the car ("moving", "waiting", "arrived").
+  - list<int> route: Remaining sequence of node IDs to visit.
+
+>> QNode<T> & Queue<T> (Template Classes)
+Purpose: Custom linked-list based queue implementation used by Roads to hold 
+waiting vehicles at red lights.
+Methods: enqueue(), dequeue(), getFrontElement(), isEmpty(), getLength().
+
+>> Subject (Class)
+Purpose: Base class for observable entities.
+Attributes: list<Observer*> observers
+Methods: addObserver(), removeObserver(), notifyObservers()
+
+>> Observer (Interface/Abstract Class)
+Purpose: Base interface for the Manager to receive updates.
+Methods: virtual void update() = 0;
+
+>> Road (Class) : inherits Subject
+Purpose: Represents a directed road segment (edge) between two intersections.
+         Handles vehicle queues, flow, and travel time calculation (BPR function).
+Attributes:
+  - int fromNode, toNode: Start and end intersection IDs.
+  - float l, v: Length and max speed.
+  - int c, f: Capacity and current flow (vehicle count).
+  - float w, wFree: Current dynamic travel time and free-flow travel time.
+  - float rho: Congestion level (f/c).
+  - int g, gTimer: Green signal status and yellow light timer.
+  - Queue<Vehicle*> Q: Queue of vehicles waiting at the end of the road.
+Methods:
+  - addVehicle(Vehicle*): Adds a car to the road, sets status to moving or waiting.
+  - vehicleFinished(Vehicle*): Moves a car to the waiting queue.
+  - tick(): Main logic step (handles yellow lights, discharges queue to next road, updates congestion).
+  - updateRho(), updateW(): Internal math for congestion.
+
+>> Intersection (Class) : inherits Subject
+Purpose: Represents a junction (node). Manages traffic signals for incoming roads.
+Attributes:
+  - int id: Unique ID.
+  - string name: Display name.
+  - float Tg: Green light duration.
+  - float x, y: World coordinates for drawing.
+  - list<Road*> inRoads: List of all roads ending at this intersection.
+  - Road* activeRoad: The road currently holding the green light.
+Methods:
+  - addIncomingRoad(Road*)
+  - tick(): Countdown timer for signals. Switches to yellow, then triggers updateSignal().
+  - updateSignal(): Uses a round-robin algorithm to cycle the green light fairly across all incoming roads.
+
+>> AdjNode & AdjList (Graph Classes)
+Purpose: Implements a directed weighted graph for the city map.
+Methods:
+  - addEdge(): Adds a connection.
+  - updateEdgeWeight(): Dynamically updates edge weight based on road congestion.
+  - shortestPath(src, dst): Implements Dijkstra's Algorithm to find the fastest route based on current dynamic travel times (w).
+
+>> Initializer (Class)
+Purpose: Hardcodes or loads the initial map layout.
+Attributes: graph, intersections, roads.
+Methods: buildMap(), addBidirectionalRoad().
+
+>> Manager (Class) : inherits Observer
+Purpose: The central brain of the simulation. Controls the simulation loop.
+Attributes:
+  - graph, intersections, roads, vehicles lists.
+  - Metrics: avgW, totalDelay, avgRho, throughput, objValue.
+  - tickCount: Master simulation clock.
+Methods:
+  - addVehicle(): Spawns a new car, calculates its initial shortest path.
+  - autoAdd(): Periodically spawns random vehicles.
+  - updateVehicles(): Decrements vehicle travel times, transitions them between roads, and handles arrivals.
+  - rerouteVehicles(): Dynamically recalculates Dijkstra paths for moving cars based on live traffic congestion.
+  - tick(): Master step function. Calls syncWeights, updateVehicles, autoAdd, Intersection->tick, Road->tick, updateMetrics.
+  - update() [from Observer]: Triggered by road congestion changes. Calls rerouteVehicles().
+
+-----------------------------------------------------------------------------
+3. FRONTEND / GUI CLASSES
+-----------------------------------------------------------------------------
+
+>> trafficSimulation (Windows Forms Form Class)
+Purpose: The main GUI application window. Handles rendering, user inputs, 
+and background threading for the simulation.
+Key Attributes:
+  - Manager* manager: Pointer to the backend logic.
+  - Thread^ simThread: Background thread running the simulation loop.
+  - bool simRunning: Toggle for start/pause.
+  - float zoom, camX, camY: Camera controls for panning and zooming.
+  - Bitmap^ staticLayer: Cached image of the grass, roads, and scenery to boost rendering performance.
+Key Methods:
+  - InitializeComponent(): WinForms auto-generated UI setup.
+  - simLoop(): The while-loop running on the background thread. Calls manager->tick() and triggers screen invalidation.
+  - buildStaticLayer(): Draws the immutable background (grass, roads, trees, buildings).
+  - drawScenery(): Procedurally generates aesthetic city elements.
+  - drawIntersections(): Draws the grey junction boxes and traffic lights.
+  - drawVehicles(): Renders cars with dynamic zoom-based scaling and smooth movement math.
+  - panel1_Paint(): The main render event. Applies matrix transformations (Scale/Translate) for the camera and calls the draw functions.
+  - Mouse & Scroll Handlers: panel1_MouseMove, button8_Click (Zoom), vScrollBar1_Scroll.
+
+-----------------------------------------------------------------------------
+4. HOW THEY INTERACT (Workflow Summary for UML Sequence/Activity)
+-----------------------------------------------------------------------------
+1. Initialization: `trafficSimulation` creates an `Initializer`, builds the map, then passes it to `Manager`.
+2. Rendering: `trafficSimulation` sets up a Paint loop on `panel1`. It asks `Manager` for lists of Intersections, Roads, and Vehicles to draw them.
+3. Simulation Loop: A background thread calls `Manager::tick()` continuously.
+4. Inside Tick: 
+   - Manager updates vehicle progress.
+   - Manager asks Intersections to update signals.
+   - Manager asks Roads to discharge vehicles through intersections.
+   - Roads recalculate their congestion (BPR function) and notify the Manager.
+   - Manager updates the Graph edge weights and reroutes cars dynamically using Dijkstra.
